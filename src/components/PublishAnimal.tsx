@@ -89,7 +89,7 @@ const PublishAnimal: React.FC = () => {
         latLong,
       };
 
-      const response = await fetch('http://localhost:3000/api/animals', {
+      const response = await fetch('https://shelty-backend.onrender.com/api/animals', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
