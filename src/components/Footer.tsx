@@ -22,7 +22,7 @@ const Footer: React.FC = () => {
             </Link>
           ))}
           <a 
-            href="https://github.com/tomastk/shelty-hackaton" 
+            href="https://github.com/tomastk/shelty-frontend" 
             target="_blank" 
             rel="noopener noreferrer" 
             className="flex flex-col items-center text-[#0081a7] hover:text-[#00afb9] transition duration-300"
