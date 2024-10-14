@@ -1,5 +1,7 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
-import { Camera, AlertCircle } from 'lucide-react';
+import { Camera, AlertCircle, Upload } from 'lucide-react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
@@ -15,7 +17,7 @@ interface Animal {
   species: string;
 }
 
-const PublishAnimal: React.FC = () => {
+export default function PublishAnimal() {
   const [formData, setFormData] = useState<Animal>({
     id: 0,
     name: '',
@@ -32,6 +34,8 @@ const PublishAnimal: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // Nuevo estado para la vista previa
 
   useEffect(() => {
     const fetchAnimals = async () => {
@@ -66,12 +70,48 @@ const PublishAnimal: React.FC = () => {
     }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file)); // Crear la URL para la vista previa
+    }
+  };
+
+  const uploadImageToCloudinary = async (file: File) => {
+    const uploadPreset = "cuva9arb";
+    const cloudName =  "dmfrjyvfv";
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset); // Replace with your Cloudinary upload preset
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, // Replace with your Cloudinary cloud name
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const data = await response.json();
+      return data.secure_url;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    if (!formData.name || !formData.age || !formData.size || !formData.description || !formData.imageUrl || !formData.phoneNumber || !formData.species) {
+    if (!formData.name || !formData.age || !formData.size || !formData.description || !imageFile || !formData.phoneNumber || !formData.species) {
       setErrorMessage('Por favor, completa todos los campos antes de enviar.');
       return;
     }
@@ -83,10 +123,13 @@ const PublishAnimal: React.FC = () => {
       const { latitude, longitude } = position.coords;
       const latLong = `${latitude},${longitude}`;
 
+      const imageUrl = await uploadImageToCloudinary(imageFile);
+
       const newAnimal = {
         ...formData,
         id: Date.now(),
         latLong,
+        imageUrl,
       };
 
       const response = await fetch('https://shelty-backend.onrender.com/api/animals', {
@@ -117,6 +160,8 @@ const PublishAnimal: React.FC = () => {
         latLong: '',
         species: '',
       });
+      setImageFile(null);
+      setPreviewUrl(null); // Resetear la vista previa
     } catch (error: any) {
       console.error('Error:', error);
       setErrorMessage(error.message || 'Hubo un problema al publicar el animal.');
@@ -210,109 +255,97 @@ const PublishAnimal: React.FC = () => {
           />
         </div>
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00afb9] transition"
-            rows={3}
-            placeholder="Describe al animal"
-          ></textarea>
-        </div>
-
-        <InputField
-          id="imageUrl"
-          label="URL de la Imagen"
-          value={formData.imageUrl}
+        <TextAreaField
+          id="description"
+          label="Descripción"
+          value={formData.description}
           onChange={handleChange}
-          placeholder="URL de la imagen del animal"
-          icon={<Camera className="h-5 w-5 text-gray-400" />}
+          placeholder="Descripción del animal"
         />
 
         <div>
-          <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-          <PhoneInput
-            id="phoneNumber"
-            value={formData.phoneNumber}
-            onChange={handlePhoneChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00afb9] transition"
-            placeholder="Número de teléfono"
-            defaultCountry="AR"
-            international
-          />
+          <label className="block text-sm font-medium text-gray-700">Imagen</label>
+          <div className="flex items-center mt-2">
+            <label className="relative cursor-pointer">
+              <input type="file" accept="image/*" className="sr-only" onChange={handleImageChange} />
+              <span className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                <Camera className="mr-2 h-4 w-4" /> Seleccionar Imagen
+              </span>
+            </label>
+            {imageFile && (
+              <span className="ml-4 text-gray-600">{imageFile.name}</span>
+            )}
+          </div>
+
+          {/* Contenedor de vista previa */}
+          {previewUrl && (
+            <div className="mt-4">
+              <img src={previewUrl} alt="Vista previa" className="w-full h-auto rounded-md" />
+            </div>
+          )}
         </div>
 
-        <div>
-          <button
-            type="submit"
-            className="w-full bg-[#0081a7] hover:bg-[#00afb9] text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00afb9] focus:ring-offset-2 transition duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-lg"
-            disabled={loading}
-          >
-            {loading ? 'Publicando...' : 'Publicar'}
-          </button>
-        </div>
+        <PhoneInput
+          placeholder="Número de teléfono"
+          value={formData.phoneNumber}
+          onChange={handlePhoneChange}
+          className="mt-4"
+        />
+
+        <button
+          type="submit"
+          className="w-full py-2 bg-[#00afb9] text-white font-semibold rounded hover:bg-[#0081a7]"
+        >
+          Publicar Animal
+        </button>
       </form>
     </div>
   );
-};
-
-interface InputFieldProps {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder: string;
-  icon?: React.ReactNode;
 }
 
-const InputField: React.FC<InputFieldProps> = ({ id, label, value, onChange, placeholder, icon }) => (
+const InputField = ({ id, label, value, onChange, placeholder }) => (
   <div>
-    <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-    <div className="relative">
-      <input
-        type="text"
-        id={id}
-        name={id}
-        value={value}
-        onChange={onChange}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00afb9] transition"
-        placeholder={placeholder}
-      />
-      {icon && (
-        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-          {icon}
-        </div>
-      )}
-    </div>
+    <label htmlFor={id} className="block text-sm font-medium text-gray-700">{label}</label>
+    <input
+      type="text"
+      id={id}
+      name={id}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-[#00afb9] focus:outline-none"
+    />
   </div>
 );
 
-interface SelectFieldProps {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  options: { value: string; label: string }[];
-}
-
-const SelectField: React.FC<SelectFieldProps> = ({ id, label, value, onChange, options }) => (
+const SelectField = ({ id, label, value, onChange, options }) => (
   <div>
-    <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <label htmlFor={id} className="block text-sm font-medium text-gray-700">{label}</label>
     <select
       id={id}
       name={id}
       value={value}
       onChange={onChange}
-      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00afb9] transition"
+      className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-[#00afb9] focus:outline-none"
     >
-      {options.map((option) => (
+      {options.map(option => (
         <option key={option.value} value={option.value}>{option.label}</option>
       ))}
     </select>
   </div>
 );
 
-export default PublishAnimal;
+const TextAreaField = ({ id, label, value, onChange, placeholder }) => (
+  <div>
+    <label htmlFor={id} className="block text-sm font-medium text-gray-700">{label}</label>
+    <textarea
+      id={id}
+      name={id}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      rows={4}
+      className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-[#00afb9] focus:outline-none"
+    />
+  </div>
+);
