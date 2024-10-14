@@ -187,27 +187,7 @@ export default function PublishAnimal() {
         <p className="text-sm mt-2 opacity-80">Ayuda a un animal a encontrar un hogar</p>
       </div>
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        {loading && (
-          <div className="flex items-center justify-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00afb9]"></div>
-            <span className="ml-2 text-[#0081a7] font-semibold">Publicando...</span>
-          </div>
-        )}
-        
-        {errorMessage && (
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded" role="alert">
-            <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 mr-2" />
-              <p>{errorMessage}</p>
-            </div>
-          </div>
-        )}
-
-        {successMessage && (
-          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded" role="alert">
-            <p>{successMessage}</p>
-          </div>
-        )}
+      
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <InputField
@@ -298,6 +278,28 @@ export default function PublishAnimal() {
         >
           Publicar Animal
         </button>
+
+        {loading && (
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00afb9]"></div>
+            <span className="ml-2 text-[#0081a7] font-semibold">Publicando...</span>
+          </div>
+        )}
+        
+        {errorMessage && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded" role="alert">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              <p>{errorMessage}</p>
+            </div>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded" role="alert">
+            <p>{successMessage}</p>
+          </div>
+        )}
       </form>
     </div>
   );
